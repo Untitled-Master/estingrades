@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estin Grade Calculator</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #3b82f6;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --green: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .table-container {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+
+        th {
+            background-color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        input:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .summary-card {
+            background-color: var(--bg-primary);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .summary-title {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .grade-good { color: var(--green); }
+        .grade-ok { color: var(--yellow); }
+        .grade-bad { color: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Estin Grade Calculator</h1>
+        </div>
+        <div class="table-container">
+            <table id="gradesTable">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>TD</th>
+                        <th>Exman</th>
+                        <th>Coef</th>
+                        <th>Note</th>
+                        <th>Final</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <div class="summary">
+                <div class="summary-card">
+                    <div class="summary-title">Total Coefficients</div>
+                    <div class="summary-value" id="totalCoef">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">Overall Average</div>
+                    <div class="summary-value" id="overallAverage">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-title">Best Subject</div>
+                    <div class="summary-value" id="bestSubject">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const initialData = [
+            { subject: 'Analyse', td: 15, exman: 14, coef: 5, note: 14.33, final: 71.65 },
+            { subject: 'Archi', td: 5, exman: 7, coef: 4, note: 6.33, final: 25.36 },
+            { subject: 'Algebre', td: 10, exman: 10, coef: 3, note: 10.00, final: 30 },
+            { subject: 'Elec', td: 15, exman: 11, coef: 3, note: 12.33, final: 36.96 },
+            { subject: 'SE', td: 17, exman: 17, coef: 3, note: 17.00, final: 51 },
+            { subject: 'BTW', td: 18, exman: 17, coef: 1, note: 17.33, final: 17.33 },
+            { subject: 'Francais', td: 18, exman: 14, coef: 2, note: 15.33, final: 30.64 },
+            { subject: 'Algo', td: 18, exman: 17, coef: 5, note: 17.33, final: 86.65 }
+        ];
+
+        function calculateNote(td, exman) {
+            return Number(((parseFloat(td) + 2*parseFloat(exman)) / 3).toFixed(2));
+        }
+
+        function calculateFinal(note, coef) {
+            return Number((parseFloat(note) * parseFloat(coef)).toFixed(2));
+        }
+
+        function getGradeClass(grade) {
+            if (grade >= 14) return 'grade-good';
+            if (grade >= 10) return 'grade-ok';
+            return 'grade-bad';
+        }
+
+        function updateCalculations() {
+            const rows = document.querySelectorAll('tbody tr');
+            let totalCoef = 0;
+            let totalFinal = 0;
+            let bestNote = 0;
+            let bestSubject = '';
+
+            rows.forEach(row => {
+                const td = parseFloat(row.querySelector('.td-input').value);
+                const exman = parseFloat(row.querySelector('.exman-input').value);
+                const coef = parseFloat(row.querySelector('.coef-input').value);
+                const subject = row.querySelector('.subject').textContent;
+
+                const note = calculateNote(td, exman);
+                const final = calculateFinal(note, coef);
+
+                row.querySelector('.note').textContent = note.toFixed(2);
+                row.querySelector('.final').textContent = final.toFixed(2);
+
+                if (note > bestNote) {
+                    bestNote = note;
+                    bestSubject = subject;
+                }
+
+                totalCoef += coef;
+                totalFinal += final;
+
+                // Update color classes
+                row.querySelector('.note').className = `note ${getGradeClass(note)}`;
+                row.querySelector('.final').className = `final ${getGradeClass(note)}`;
+            });
+
+            const average = totalFinal / totalCoef;
+            
+            document.getElementById('totalCoef').textContent = totalCoef.toFixed(2);
+            document.getElementById('overallAverage').textContent = average.toFixed(2);
+            document.getElementById('overallAverage').className = `summary-value ${getGradeClass(average)}`;
+            document.getElementById('bestSubject').textContent = `${bestSubject} (${bestNote.toFixed(2)})`;
+        }
+
+        function createTableRow(data) {
+            return `
+                <tr>
+                    <td class="subject">${data.subject}</td>
+                    <td><input type="number" class="td-input" value="${data.td}" min="0" max="20" step="0.5"></td>
+                    <td><input type="number" class="exman-input" value="${data.exman}" min="0" max="20" step="0.5"></td>
+                    <td><input type="number" class="coef-input" value="${data.coef}" min="0" max="20" step="0.5"></td>
+                    <td class="note ${getGradeClass(data.note)}">${data.note}</td>
+                    <td class="final ${getGradeClass(data.note)}">${data.final}</td>
+                </tr>
+            `;
+        }
+
+        // Initialize table
+        const tbody = document.querySelector('tbody');
+        initialData.forEach(data => {
+            tbody.insertAdjacentHTML('beforeend', createTableRow(data));
+        });
+
+        // Add event listeners
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', updateCalculations);
+        });
+
+        // Initial calculation
+        updateCalculations();
+    </script>
+</body>
+</html>
